@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,19 +40,52 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+uint8_t rx_data;
+uint8_t received_flag = 0;
+uint16_t blink_delay = 100; // Başlangıçta 100ms
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_GPIO_Init(void);
+static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+// UART Callback (Veri geldiğinde tetiklenir)
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	if (huart->Instance == USART2) { // UART2 ise
+		if (rx_data == '4') { // İlk karakter 4 geldi mi?
+			HAL_UART_Receive(huart, &rx_data, 1, HAL_MAX_DELAY);
+			if (rx_data == '2') { // İkinci karakter 2 ise
+				received_flag = 1; // Geçiş sinyali geldi
+			}
+		}
+		HAL_UART_Receive_IT(&huart2, &rx_data, 1); // Tekrar UART'ı dinlemeye al
+	}
+}
+
+
+// Uygulamaya Jump Fonksiyonu
+void Jump_To_Application(void) {
+	void (*app_reset_handler)(void);
+	uint32_t app_address = 0x08008000; // Uygulama adresi
+
+	// RAM'deki Stack Pointer'i al
+	__set_MSP(*(volatile uint32_t*)app_address);
+
+	// Reset handler adresini al ve uygula
+	app_reset_handler = (void (*)(void)) (*(volatile uint32_t*) (app_address + 4));
+	app_reset_handler();
+}
+
 
 /* USER CODE END 0 */
 
@@ -84,6 +117,8 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -93,8 +128,18 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-//fsksf
+
     /* USER CODE BEGIN 3 */
+
+	  HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
+	  HAL_Delay(blink_delay);
+
+	  if (received_flag) {
+		  Jump_To_Application(); // Eğer 42 gelmişse uygulamaya geçiş yap
+	  }
+
+
+
   }
   /* USER CODE END 3 */
 }
@@ -138,6 +183,68 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief USART2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART2_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART2_Init 0 */
+
+  /* USER CODE END USART2_Init 0 */
+
+  /* USER CODE BEGIN USART2_Init 1 */
+
+  /* USER CODE END USART2_Init 1 */
+  huart2.Instance = USART2;
+  huart2.Init.BaudRate = 9600;
+  huart2.Init.WordLength = UART_WORDLENGTH_8B;
+  huart2.Init.StopBits = UART_STOPBITS_1;
+  huart2.Init.Parity = UART_PARITY_NONE;
+  huart2.Init.Mode = UART_MODE_TX_RX;
+  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART2_Init 2 */
+
+  /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_GPIO_Init(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
+
+  /* GPIO Ports Clock Enable */
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : LED1_Pin */
+  GPIO_InitStruct.Pin = LED1_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+  HAL_GPIO_Init(LED1_GPIO_Port, &GPIO_InitStruct);
+
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
