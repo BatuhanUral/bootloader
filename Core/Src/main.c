@@ -43,9 +43,8 @@
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint8_t rx_data;
-uint8_t received_flag = 0;
-uint16_t blink_delay = 100; // Başlangıçta 100ms
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -54,37 +53,12 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-// UART Callback (Veri geldiğinde tetiklenir)
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
-	if (huart->Instance == USART2) { // UART2 ise
-		if (rx_data == '4') { // İlk karakter 4 geldi mi?
-			HAL_UART_Receive(huart, &rx_data, 1, HAL_MAX_DELAY);
-			if (rx_data == '2') { // İkinci karakter 2 ise
-				received_flag = 1; // Geçiş sinyali geldi
-			}
-		}
-		HAL_UART_Receive_IT(&huart2, &rx_data, 1); // Tekrar UART'ı dinlemeye al
-	}
-}
-
-
-// Uygulamaya Jump Fonksiyonu
-void Jump_To_Application(void) {
-	void (*app_reset_handler)(void);
-	uint32_t app_address = 0x08008000; // Uygulama adresi
-
-	// RAM'deki Stack Pointer'i al
-	__set_MSP(*(volatile uint32_t*)app_address);
-
-	// Reset handler adresini al ve uygula
-	app_reset_handler = (void (*)(void)) (*(volatile uint32_t*) (app_address + 4));
-	app_reset_handler();
-}
 
 
 /* USER CODE END 0 */
@@ -97,6 +71,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+
 
   /* USER CODE END 1 */
 
@@ -131,12 +106,6 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  HAL_GPIO_TogglePin(LED1_GPIO_Port,LED1_Pin);
-	  HAL_Delay(blink_delay);
-
-	  if (received_flag) {
-		  Jump_To_Application(); // Eğer 42 gelmişse uygulamaya geçiş yap
-	  }
 
 
 
@@ -248,6 +217,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
 
 /* USER CODE END 4 */
 
