@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <jump_bootloader.h>
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -47,7 +48,7 @@ UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
 char rxMessage[3];
-
+int receivedData =0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -142,14 +143,19 @@ int main(void)
 
 	  /*USART İLE ATLAMA*/
 
-		if(HAL_UART_Receive(&huart1,(uint8_t *)rxMessage,sizeof(rxMessage),HAL_MAX_DELAY)!=HAL_OK){
-			Error_Handler();
-		}
 
-		rxMessage[strcspn(rxMessage, "\r\n")] = 0; // Satır sonu karakterlerini temizle
-		if(strcmp(rxMessage, "42") == 0) {
-		    Jump_To_Application();
-		}
+	  memset(rxMessage, 0, sizeof(rxMessage));	/* buffer temizleme her yeni veride*/
+
+	    if (HAL_UART_Receive(&huart1, (uint8_t *)rxMessage, sizeof(rxMessage), HAL_MAX_DELAY) == HAL_OK) {
+
+	        //rxMessage[strcspn(rxMessage, "\r\n")] = 0; /* boş karakter temizleme*/
+	        receivedData = atoi(rxMessage); // string->int yaptık
+
+	        if (receivedData == 42) {
+	            Jump_To_Application();
+	        }
+//KENDİMİ ASMADAN ÖNCEKİ SON DENEMELER TŞK
+	    }
 
 
   }
