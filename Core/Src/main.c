@@ -32,7 +32,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 typedef void (*pFunction)(void);
-#define APP_ADDRESS  0x08008000  // Uygulama başlangıç adresi
+#define APP_ADDRESS  0x08008000  // User_app flash adresi
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -64,7 +64,7 @@ void Jump_To_Application(void) {
     uint32_t JumpAddress;
     pFunction Jump_To_App;
 
-    // Uygulamanın stack pointer adresini al
+    // User_APP stack pointer adresini al
     uint32_t app_stack_pointer = *(volatile uint32_t*)APP_ADDRESS;
 
     // Eğer uygulama yüklü değilse çık
