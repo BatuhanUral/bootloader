@@ -17,11 +17,13 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+
 #include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
+#include <jump_bootloader.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,8 +33,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-typedef void (*pFunction)(void);
-#define APP_ADDRESS  0x08008000  // User_app flash adresi
+//typedef void (*pFunction)(void);
+//#define APP_ADDRESS  0x08008000  // User_app flash adresi
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -44,7 +46,7 @@ typedef void (*pFunction)(void);
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-char rxMessage[1];
+char rxMessage[3];
 
 /* USER CODE END PV */
 
@@ -60,31 +62,31 @@ static void MX_USART1_UART_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void Jump_To_Application(void) {
-    uint32_t JumpAddress;
-    pFunction Jump_To_App;
-
-    // User_APP stack pointer adresini al
-    uint32_t app_stack_pointer = *(volatile uint32_t*)APP_ADDRESS;
-
-    // Eğer uygulama yüklü değilse çık
-    if (app_stack_pointer < 0x20000000 || app_stack_pointer > 0x2004FFFF) {
-        return;
-    }
-
-    // Uygulamanın reset vektörünü al
-    JumpAddress = *(volatile uint32_t*) (APP_ADDRESS + 4);
-    Jump_To_App = (pFunction) JumpAddress;
-
-    // Kesme vektör tablosu başlangıç adresini güncelle
-    SCB->VTOR = APP_ADDRESS;
-
-    // Stack pointer'ı uygula
-    __set_MSP(app_stack_pointer);
-
-    // Uygulamaya atla
-    Jump_To_App();
-}
+//void Jump_To_Application(void) {
+//    uint32_t JumpAddress;
+//    pFunction Jump_To_App;
+//
+//    // User_APP stack pointer adresini al
+//    uint32_t app_stack_pointer = *(volatile uint32_t*)APP_ADDRESS;
+//
+//    // Eğer uygulama yüklü değilse çık
+//    if (app_stack_pointer < 0x20000000 || app_stack_pointer > 0x2004FFFF) {
+//        return;
+//    }
+//
+//    // Uygulamanın reset vektörünü al
+//    JumpAddress = *(volatile uint32_t*) (APP_ADDRESS + 4);
+//    Jump_To_App = (pFunction) JumpAddress;
+//
+//    // Kesme vektör tablosu başlangıç adresini güncelle
+//    SCB->VTOR = APP_ADDRESS;
+//
+//    // Stack pointer'ı uygula
+//    __set_MSP(app_stack_pointer);
+//
+//    // Uygulamaya atla
+//    Jump_To_App();
+//}
 
 
 /* USER CODE END 0 */
@@ -144,10 +146,11 @@ int main(void)
 			Error_Handler();
 		}
 
-		if(strncmp(rxMessage,"42",1)==0){
-			Jump_To_Application();
-
+		rxMessage[strcspn(rxMessage, "\r\n")] = 0; // Satır sonu karakterlerini temizle
+		if(strcmp(rxMessage, "42") == 0) {
+		    Jump_To_Application();
 		}
+
 
   }
   /* USER CODE END 3 */
