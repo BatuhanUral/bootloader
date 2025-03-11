@@ -31,7 +31,8 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+typedef void (*pFunction)(void);
+#define APP_ADDRESS  0x08008000  // Uygulama başlangıç adresi
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,7 +59,31 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void Jump_To_Application(void) {
+    uint32_t JumpAddress;
+    pFunction Jump_To_App;
 
+    // Uygulamanın stack pointer adresini al
+    uint32_t app_stack_pointer = *(volatile uint32_t*)APP_ADDRESS;
+
+    // Eğer uygulama yüklü değilse çık
+    if (app_stack_pointer < 0x20000000 || app_stack_pointer > 0x2004FFFF) {
+        return;
+    }
+
+    // Uygulamanın reset vektörünü al
+    JumpAddress = *(volatile uint32_t*) (APP_ADDRESS + 4);
+    Jump_To_App = (pFunction) JumpAddress;
+
+    // Kesme vektör tablosu başlangıç adresini güncelle
+    SCB->VTOR = APP_ADDRESS;
+
+    // Stack pointer'ı uygula
+    __set_MSP(app_stack_pointer);
+
+    // Uygulamaya atla
+    Jump_To_App();
+}
 
 
 /* USER CODE END 0 */
@@ -106,7 +131,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-
+	  if (HAL_GPIO_ReadPin(BUTON_GPIO_Port,BUTON_Pin) == GPIO_PIN_SET) {
+		  Jump_To_Application();
+	  }
 
 
   }
@@ -204,6 +231,12 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : BUTON_Pin */
+  GPIO_InitStruct.Pin = BUTON_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BUTON_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LED1_Pin */
   GPIO_InitStruct.Pin = LED1_Pin;
