@@ -59,6 +59,7 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
 void Jump_To_Application(void) {
     uint32_t JumpAddress;
     pFunction Jump_To_App;
